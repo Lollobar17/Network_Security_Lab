@@ -65,3 +65,101 @@ The SIEM system is documented separately in the
 
 Each scenario follows a structured **test-detect-improve** cycle:
 
+1. PREPARE — Define the threat scenario and expected SIEM behavior
+2. SIMULATE — Execute the controlled attack using standard security tools
+3. MONITOR — Observe SIEM response — alerts, logs, detection accuracy
+4. DOCUMENT — Record findings, evidence and gap analysis
+5. IMPROVE — Identify detection gaps and propose rule improvements
+
+
+This methodology mirrors the responsibilities of a system integration
+professional in an enterprise environment — configuring, testing and
+continuously improving security infrastructure.
+
+---
+
+## Test Scenarios
+
+| # | Scenario | Tool | MITRE Technique | Objective | Status |
+|---|---|---|---|---|---|
+| 01 | Network Scanning | Nmap | T1046 — Network Service Discovery | Validate perimeter visibility | Completed |
+| 02 | SSH Brute Force | Hydra | T1110 — Brute Force | Test authentication monitoring | Planned |
+| 03 | SQL Injection | SQLmap | T1190 — Exploit Public-Facing App | Validate web layer detection | Planned |
+| 04 | Path Traversal | Manual | T1083 — File and Directory Discovery | Test file access alerting | Planned |
+
+Each scenario includes:
+- Full execution documentation
+- SIEM alert evidence (screenshots and log extracts)
+- Gap analysis and improvement recommendations
+
+---
+
+## SIEM Integration
+
+Every simulated scenario is monitored in real time by the custom SIEM system.
+The integration validates:
+
+- **Detection accuracy** — does the rule engine trigger the correct alert?
+- **Log completeness** — are all relevant events captured and stored?
+- **Response time** — how quickly does the alert appear on the dashboard?
+- **MITRE mapping** — is the technique correctly classified?
+
+---
+
+## Tools Reference
+
+| Tool | Purpose |
+|---|---|
+| **Nmap** | Network discovery and port scanning |
+| **Hydra** | Brute force against network services |
+| **SQLmap** | SQL injection detection and testing |
+| **Kali Linux** | Security-focused Linux distribution |
+| **Wireshark** | Network traffic analysis |
+
+---
+
+## Key Findings
+
+This section will be populated progressively as scenarios are completed,
+documenting detection gaps identified and improvements applied to the
+SIEM rule engine.
+
+---
+
+## Roadmap
+
+- [x] SIEM system operational with 8 detection rules
+- [x] Lab environment configured (Kali Linux + VirtualBox)
+- [x] Scenario 01 — Network Scanning
+- [ ] Scenario 02 — SSH Brute Force
+- [ ] Scenario 03 — SQL Injection
+- [ ] Scenario 04 — Path Traversal
+- [ ] Detection gap analysis and rule improvements
+- [ ] Final security assessment report
+
+---
+
+## Disclaimer
+
+All activities documented in this repository are performed exclusively in
+a controlled, isolated laboratory environment owned by the author.
+No tests have been or will be conducted against systems, networks or
+infrastructure without explicit authorization.
+
+This project is intended solely for educational purposes and the
+development of professional skills in network security monitoring
+and system integration.
+
+---
+
+## License
+
+This project is licensed under the MIT License.
+See the [LICENSE](LICENSE) file for details.
+
+
+
+
+
+
+
