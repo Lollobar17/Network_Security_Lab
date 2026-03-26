@@ -131,11 +131,11 @@ SIEM rule engine.
 - [x] SIEM system operational with 8 detection rules
 - [x] Lab environment configured (Kali Linux + VirtualBox)
 - [x] Scenario 01 — Network Scanning
-- [ ] Scenario 02 — SSH Brute Force
-- [ ] Scenario 03 — SQL Injection
-- [ ] Scenario 04 — Path Traversal
-- [ ] Detection gap analysis and rule improvements
-- [ ] Final security assessment report
+- [x] Scenario 02 — SSH Brute Force
+- [x] Scenario 03 — SQL Injection
+- [x] Scenario 04 — Path Traversal
+- [x] Detection gap analysis and rule improvements
+- [x] Final security assessment report
 
 ---
 
