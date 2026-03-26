@@ -85,9 +85,20 @@ Result: Service versions and OS fingerprint successfully retrieved.
 
 | Check | Result | Notes |
 |---|---|---|
-| Port scan alert triggered | To be verified | Requires SIEM log review |
-| MITRE T1046 mapped | To be verified | Rule engine check required |
-| Log entry created | To be verified | Check /api/events endpoint |
+| Port scan alert triggered | Not detected | No network scanning rule in current ruleset |
+| MITRE T1046 mapped | Not detected | T1046 not covered by existing detection rules |
+| Log entry created | Not detected | SIEM monitors system logs, not network traffic |
+| Source IP flagged | Not detected | No inbound traffic monitoring capability |
+
+### SIEM Response Details
+
+The SIEM did not detect the Nmap port scan. This is expected behavior
+given the current architecture — the SIEM monitors Windows system logs
+and auth events, but has no network-level visibility. Detecting port
+scans would require integration with a network monitoring tool such as
+Suricata or Zeek, or a dedicated IDS/IPS layer.
+
+This represents a significant detection gap for perimeter-level threats.
 
 ---
 
@@ -106,8 +117,10 @@ including port 445 (SMB) which represents a significant attack surface in
 enterprise environments. The presence of legacy protocols such as NetBIOS
 (139) highlights the importance of network hardening in regulated contexts.
 
-The next step is to verify whether the SIEM correctly detected and logged
-the scanning activity, and to review the alert mapping against MITRE T1046.
+The SIEM did not detect the scanning activity due to the absence of
+network-level monitoring. This gap will be addressed in the SIEM
+improvement roadmap by adding a dedicated network scanning detection rule
+integrated with a traffic monitoring layer.
 
 ---
 
@@ -116,4 +129,3 @@ the scanning activity, and to review the alert mapping against MITRE T1046.
 - MITRE ATT&CK T1046: https://attack.mitre.org/techniques/T1046/
 - Nmap Documentation: https://nmap.org/docs.html
 - Microsoft SMB Security: https://docs.microsoft.com/en-us/windows/security
-
