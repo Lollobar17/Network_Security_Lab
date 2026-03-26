@@ -1,6 +1,6 @@
 # Scenario 02 — SSH Brute Force
 
-**Date:** 2026-03-21
+**Date:** 2026-03-15
 **Tester:** Lorenzo Carta
 **Environment:** Controlled Lab — VirtualBox NAT Network
 **Tool:** Hydra 9.6
@@ -80,10 +80,22 @@ Wordlist used: rockyou.txt — 14,344,399 passwords.
 
 | Check | Result | Notes |
 |---|---|---|
-| Brute force alert triggered | To be verified | Requires SIEM log review |
-| MITRE T1110 mapped | To be verified | Rule engine check required |
-| Failed login events logged | To be verified | Check auth.log entries |
-| Source IP flagged | To be verified | Check /api/alerts endpoint |
+| Brute force alert triggered | Detected | AUTH-002 Root Login Attempt — severity HIGH |
+| MITRE mapping | Partial | Classified as T1078 instead of T1110 |
+| Failed login events logged | Detected | 3 alerts at 11:11:31, 11:11:39, 11:11:44 UTC |
+| Source IP flagged | Not detected | Source IP absent from /api/alerts endpoint |
+
+### SIEM Response Details
+
+The SIEM correctly detected repeated SSH login attempts as root and
+generated HIGH severity alerts via rule AUTH-002. However, the MITRE
+technique was mapped to T1078 (Valid Accounts) instead of the more
+accurate T1110 (Brute Force), indicating a gap in the detection rule
+classification.
+
+Additionally, the source IP of the attacker (Kali Linux VM) was not
+included in the alert data, which would be critical information for
+incident response in a real enterprise environment.
 
 ---
 
@@ -91,22 +103,30 @@ Wordlist used: rockyou.txt — 14,344,399 passwords.
 
 | File | Description |
 |---|---|
-| `hydra_bruteforce_ssh.png` | Hydra output showing active brute force — 3509 attempts in 3 minutes |
+| `hydra_bruteforce_ssh.png` | Hydra output — 3509 attempts in 3 minutes |
+| `siem_dashboard_alerts.png` | SIEM dashboard showing ROOT Login Attempt alerts triggered during test |
 
 ---
 
 ## Conclusions
 
-The SSH brute force simulation successfully demonstrated how an attacker
-can automate thousands of login attempts per minute against an exposed
-SSH service. The absence of account lockout policies on the target
-represents a critical security gap in a real enterprise environment.
+The SSH brute force simulation successfully demonstrated both the
+offensive capability of Hydra and the partial detection capability
+of the SIEM system. The SIEM correctly identified repeated SSH login
+attempts and generated HIGH severity alerts, validating the core
+detection logic.
+
+However, two gaps were identified:
+- MITRE technique misclassification (T1078 vs T1110)
+- Missing source IP in alert data
+
+These findings will be addressed in the SIEM improvement roadmap.
 
 Key remediation recommendations:
 - Enable account lockout after N failed attempts
 - Disable password authentication — use SSH key pairs instead
 - Restrict SSH access to trusted IP ranges only
-- Monitor and alert on repeated failed login attempts via SIEM
+- Add dedicated T1110 Brute Force detection rule to SIEM
 
 ---
 
@@ -115,4 +135,3 @@ Key remediation recommendations:
 - MITRE ATT&CK T1110: https://attack.mitre.org/techniques/T1110/
 - Hydra Documentation: https://github.com/vanhauser-thc/thc-hydra
 - OpenSSH Hardening: https://www.ssh.com/academy/ssh/security
-
