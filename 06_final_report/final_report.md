@@ -202,7 +202,7 @@ Three path traversal variants — all returned 404 Not Found.
 ## References
 
 - MITRE ATT&CK Framework: https://attack.mitre.org
-- HomeLab SIEM Repository: https://github.com/Lollobar17/homelab-siem
+- HomeLab SIEM Repository: https://github.com/Lollobar17/Homelab_SIEM
 - Network Security Monitoring Lab: https://github.com/Lollobar17/Network_Security_Lab
 - PTES Standard: http://www.pentest-standard.org
 - OWASP Testing Guide: https://owasp.org/www-project-web-security-testing-guide
