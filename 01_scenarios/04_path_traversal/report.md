@@ -46,6 +46,12 @@ curl http://192.168.0.45:5000/static/../../../etc/passwd
 
 curl http://192.168.0.45:5000/static/..%2F..%2F..%2Fetc%2Fpasswd
 
+> [!TIP]
+> Always test URL-encoded variants — many applications sanitize literal
+> ../ sequences but fail to decode and check encoded equivalents.
+> Additional variants to test include double encoding (%252F) and
+> mixed encoding to bypass WAF rules.
+
 ---
 
 ## Findings
@@ -60,6 +66,12 @@ curl http://192.168.0.45:5000/static/..%2F..%2F..%2Fetc%2Fpasswd
 
 ### Security Observations
 
+> [!IMPORTANT]
+> All three path traversal variants were blocked by Flask's built-in
+> routing mechanism. Routes are explicitly defined and the framework
+> does not serve arbitrary filesystem paths — this is protection by
+> design, not by explicit input validation.
+
 | Finding | Severity | Notes |
 |---|---|---|
 | No path traversal vulnerability detected | Positive | All variants correctly rejected |
@@ -72,9 +84,15 @@ curl http://192.168.0.45:5000/static/..%2F..%2F..%2Fetc%2Fpasswd
 
 | Check | Result | Notes |
 |---|---|---|
-| Traversal attempts logged | To be verified | Check /api/events for suspicious requests |
-| Anomalous URL patterns detected | To be verified | ../  sequences should trigger alerts |
-| Source IP flagged | To be verified | Check /api/alerts endpoint |
+| Traversal attempts logged | Not detected | Web layer not monitored |
+| Anomalous URL patterns detected | Not detected | ../ sequences generated no alert |
+| Source IP flagged | Not detected | No web traffic monitoring capability |
+
+> [!CAUTION]
+> Three path traversal attempts with clearly anomalous URL patterns
+> generated zero SIEM alerts. The ../ sequences in HTTP requests are
+> a well-known attack indicator that should be flagged immediately.
+> This gap is shared with Scenario 03 — web traffic is not monitored.
 
 ---
 
@@ -97,9 +115,12 @@ Flask's built-in routing mechanism provides effective protection against
 path traversal by design — routes are explicitly defined and the
 framework does not serve arbitrary filesystem paths.
 
-This result confirms that the SIEM application follows secure
-development practices and is not susceptible to file disclosure
-via path manipulation.
+> [!TIP]
+> Key remediation recommendations:
+> Add Flask access log parsing to detect ../ patterns in HTTP requests.
+> Implement a WAF rule to flag and block path traversal attempts.
+> Add explicit input validation for any endpoints that accept file paths
+> as parameters to complement Flask's built-in protection.
 
 ---
 
@@ -108,4 +129,3 @@ via path manipulation.
 - MITRE ATT&CK T1083: https://attack.mitre.org/techniques/T1083/
 - OWASP Path Traversal: https://owasp.org/www-community/attacks/Path_Traversal
 - Flask Security: https://flask.palletsprojects.com/en/stable/security/
-
