@@ -19,6 +19,7 @@
 - [Lab Architecture](#lab-architecture)
 - [Methodology](#methodology)
 - [Test Scenarios](#test-scenarios)
+- [Quick Reference](#quick-reference)
 - [SIEM Integration](#siem-integration)
 - [Tools Reference](#tools-reference)
 - [Key Findings](#key-findings)
@@ -38,6 +39,11 @@ Each scenario is designed to answer a specific question:
 
 > "Does the monitoring system correctly detect, log and alert on this
 > type of threat? If not, why — and how can it be improved?"
+
+> [!IMPORTANT]
+> This project bridges offensive simulation and defensive monitoring —
+> every attack scenario is paired with a SIEM detection analysis and
+> a concrete improvement recommendation.
 
 This approach reflects real-world security operations in enterprise and
 regulated environments, where system administrators are responsible for
@@ -71,10 +77,10 @@ Each scenario follows a structured **test-detect-improve** cycle:
 4. DOCUMENT — Record findings, evidence and gap analysis
 5. IMPROVE — Identify detection gaps and propose rule improvements
 
-
-This methodology mirrors the responsibilities of a system integration
-professional in an enterprise environment — configuring, testing and
-continuously improving security infrastructure.
+> [!TIP]
+> Each scenario folder contains a full report, evidence screenshots and
+> a SIEM detection analysis. Start from 01_scenarios to follow the
+> assessment in chronological order.
 
 ---
 
@@ -83,14 +89,41 @@ continuously improving security infrastructure.
 | # | Scenario | Tool | MITRE Technique | Objective | Status |
 |---|---|---|---|---|---|
 | 01 | Network Scanning | Nmap | T1046 — Network Service Discovery | Validate perimeter visibility | Completed |
-| 02 | SSH Brute Force | Hydra | T1110 — Brute Force | Test authentication monitoring | Planned |
-| 03 | SQL Injection | SQLmap | T1190 — Exploit Public-Facing App | Validate web layer detection | Planned |
-| 04 | Path Traversal | Manual | T1083 — File and Directory Discovery | Test file access alerting | Planned |
+| 02 | SSH Brute Force | Hydra | T1110 — Brute Force | Test authentication monitoring | Completed |
+| 03 | SQL Injection | SQLmap | T1190 — Exploit Public-Facing App | Validate web layer detection | Completed |
+| 04 | Path Traversal | Manual | T1083 — File and Directory Discovery | Test file access alerting | Completed |
 
 Each scenario includes:
 - Full execution documentation
 - SIEM alert evidence (screenshots and log extracts)
 - Gap analysis and improvement recommendations
+
+---
+
+## Quick Reference
+
+### Network Scanning — Nmap
+
+Basic port scan: `nmap 192.168.56.1`
+
+Service version detection: `nmap -sV 192.168.56.1`
+
+Full scan with OS detection: `nmap -A 192.168.56.1`
+
+### SSH Brute Force — Hydra
+
+Brute force SSH with wordlist: `hydra -l username -P /usr/share/wordlists/rockyou.txt ssh://192.168.56.1`
+
+Reduce parallel tasks: `hydra -l username -P wordlist.txt -t 4 ssh://192.168.56.1`
+
+### Audit Logic — XML Structure
+
+Detection rule format: `<detection_rule><name>Port Scan</name><threshold>10 ports in 60s</threshold><action>ALERT</action></detection_rule>`
+
+> [!TIP]
+> All commands above were executed from Kali Linux in a VirtualBox
+> isolated environment. Never run these tools against systems you
+> do not own or have explicit authorization to test.
 
 ---
 
@@ -103,6 +136,11 @@ The integration validates:
 - **Log completeness** — are all relevant events captured and stored?
 - **Response time** — how quickly does the alert appear on the dashboard?
 - **MITRE mapping** — is the technique correctly classified?
+
+> [!IMPORTANT]
+> The SIEM detected 1 out of 4 scenarios (25% detection rate).
+> Full gap analysis and improvement roadmap are documented in
+> 05_gap_analysis/gap_analysis.md
 
 ---
 
@@ -120,9 +158,11 @@ The integration validates:
 
 ## Key Findings
 
-This section will be populated progressively as scenarios are completed,
-documenting detection gaps identified and improvements applied to the
-SIEM rule engine.
+> [!IMPORTANT]
+> Detection Rate: 25% — 1/4 scenarios detected (partial).
+> The SIEM correctly identifies authentication-based threats but has
+> no visibility into network-level or web-layer attack activity.
+> Full findings are documented in 06_final_report/final_report.md
 
 ---
 
@@ -141,14 +181,14 @@ SIEM rule engine.
 
 ## Disclaimer
 
-All activities documented in this repository are performed exclusively in
-a controlled, isolated laboratory environment owned by the author.
-No tests have been or will be conducted against systems, networks or
-infrastructure without explicit authorization.
-
-This project is intended solely for educational purposes and the
-development of professional skills in network security monitoring
-and system integration.
+> [!IMPORTANT]
+> All activities documented in this repository are performed exclusively
+> in a controlled, isolated laboratory environment owned by the author.
+> No tests have been or will be conducted against systems, networks or
+> infrastructure without explicit authorization.
+> This project is intended solely for educational purposes and the
+> development of professional skills in network security monitoring
+> and system integration.
 
 ---
 
