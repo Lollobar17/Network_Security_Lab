@@ -35,8 +35,6 @@ Three API endpoints were tested sequentially using SQLmap with the
 
 ### 1. Test — /api/events
 
-Command executed from Kali Linux terminal:
-
 sqlmap -u http://192.168.0.45:5000/api/events --batch
 
 ### 2. Test — /api/alerts
@@ -46,6 +44,12 @@ sqlmap -u http://192.168.0.45:5000/api/alerts --batch
 ### 3. Test — /api/ingest (POST parameters)
 
 sqlmap -u http://192.168.0.45:5000/api/ingest --data="source=test&message=test" --batch
+
+> [!TIP]
+> Always test POST endpoints separately with --data flag — GET endpoints
+> often return 404 for missing parameters while POST endpoints reveal
+> more about the application's input handling behavior.
+> Use --level 3 --risk 2 for deeper testing in controlled environments.
 
 ---
 
@@ -61,6 +65,12 @@ sqlmap -u http://192.168.0.45:5000/api/ingest --data="source=test&message=test" 
 
 ### Security Observations
 
+> [!IMPORTANT]
+> The /api/ingest endpoint returns 400 Bad Request on malformed input —
+> confirming that input validation is active. This is a positive security
+> finding. However, the SIEM generated no alerts for 147 anomalous HTTP
+> requests, indicating a complete web layer blind spot.
+
 | Finding | Severity | Notes |
 |---|---|---|
 | No SQL injection vulnerability detected | Positive | All endpoints correctly reject malicious payloads |
@@ -73,9 +83,15 @@ sqlmap -u http://192.168.0.45:5000/api/ingest --data="source=test&message=test" 
 
 | Check | Result | Notes |
 |---|---|---|
-| SQLmap requests logged | To be verified | Check /api/events for anomalous traffic |
-| High request volume detected | To be verified | 147 requests in seconds — anomaly pattern |
-| Source IP flagged | To be verified | Check /api/alerts endpoint |
+| SQLmap requests logged | Not detected | Web layer not monitored |
+| High request volume detected | Not detected | 147 requests in seconds generated no alert |
+| Source IP flagged | Not detected | No web traffic monitoring capability |
+
+> [!CAUTION]
+> SQLmap sent 147 HTTP requests with malicious SQL payloads and zero
+> alerts were generated. The SIEM has no visibility into its own web
+> traffic — Flask access logs are not parsed by the collector.
+> This is a significant gap for web application security monitoring.
 
 ---
 
@@ -83,12 +99,12 @@ sqlmap -u http://192.168.0.45:5000/api/ingest --data="source=test&message=test" 
 
 | File | Description |
 |---|---|
-| `sqlmap_api_events.png` | SQLmap output — /api/events test part 1 |
-| `sqlmap_api_events_2.png` | SQLmap output — /api/events test part 2 |
-| `sqlmap_api_alerts.png` | SQLmap output — /api/alerts test part 1 |
-| `sqlmap_api_alerts_2.png` | SQLmap output — /api/alerts test part 2 |
-| `sqlmap_api_ingest.png` | SQLmap output — /api/ingest test part 1 |
-| `sqlmap_api_ingest_2.png` | SQLmap output — /api/ingest test part 2 |
+| `01_sqlmap_api_events.png` | SQLmap output — /api/events test part 1 |
+| `02_sqlmap_api_events.png` | SQLmap output — /api/events test part 2 |
+| `03_sqlmap_api_alerts.png` | SQLmap output — /api/alerts test part 1 |
+| `04_sqlmap_api_alerts.png` | SQLmap output — /api/alerts test part 2 |
+| `05_sqlmap_api_ingest.png` | SQLmap output — /api/ingest test part 1 |
+| `06_sqlmap_api_ingest.png` | SQLmap output — /api/ingest test part 2 |
 
 ---
 
@@ -102,9 +118,12 @@ The 400 Bad Request response on /api/ingest confirms that input validation
 is functioning correctly, rejecting malformed POST data before it reaches
 the database layer.
 
-This result demonstrates that the SIEM application follows secure coding
-practices for database interaction, likely using parameterized queries
-or an ORM layer that prevents direct SQL manipulation.
+> [!TIP]
+> Key remediation recommendations:
+> Add Flask access log parsing to the SIEM collector to gain web layer
+> visibility. Implement rate limiting on API endpoints to flag high-volume
+> requests from single sources. Consider adding authentication to REST API
+> endpoints to reduce the attack surface.
 
 ---
 
@@ -113,4 +132,3 @@ or an ORM layer that prevents direct SQL manipulation.
 - MITRE ATT&CK T1190: https://attack.mitre.org/techniques/T1190/
 - SQLmap Documentation: https://sqlmap.org
 - OWASP SQL Injection: https://owasp.org/www-community/attacks/SQL_Injection
-
