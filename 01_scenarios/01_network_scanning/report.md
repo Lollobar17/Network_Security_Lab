@@ -46,6 +46,12 @@ nmap -sV 192.168.56.1
 
 Result: Service versions and OS fingerprint successfully retrieved.
 
+> [!TIP]
+> Always start with a basic scan before running service detection.
+> The -sV flag significantly increases scan time — use it only after
+> confirming which ports are open. For stealthier reconnaissance,
+> use -T2 to slow down the scan and reduce noise in target logs.
+
 ---
 
 ## Findings
@@ -72,6 +78,12 @@ Result: Service versions and OS fingerprint successfully retrieved.
 
 ### Security Observations
 
+> [!IMPORTANT]
+> Port 445 (SMB) is open and exposed. SMB has historically been the
+> vector for critical attacks including EternalBlue and WannaCry.
+> In an enterprise environment, SMB should never be exposed to
+> untrusted network segments.
+
 | Port | Risk | Notes |
 |---|---|---|
 | 135/tcp | Medium | RPC endpoint mapper — commonly targeted for lateral movement |
@@ -89,6 +101,12 @@ Result: Service versions and OS fingerprint successfully retrieved.
 | MITRE T1046 mapped | Not detected | T1046 not covered by existing detection rules |
 | Log entry created | Not detected | SIEM monitors system logs, not network traffic |
 | Source IP flagged | Not detected | No inbound traffic monitoring capability |
+
+> [!CAUTION]
+> The SIEM has no visibility into inbound network scanning activity.
+> This is a critical blind spot — port scanning is typically the first
+> phase of any attack and should be detected as early as possible.
+> Integration with a network monitoring layer is required.
 
 ### SIEM Response Details
 
@@ -121,6 +139,12 @@ The SIEM did not detect the scanning activity due to the absence of
 network-level monitoring. This gap will be addressed in the SIEM
 improvement roadmap by adding a dedicated network scanning detection rule
 integrated with a traffic monitoring layer.
+
+> [!TIP]
+> Key remediation recommendations:
+> Disable NetBIOS (port 139) if not required — it is a legacy protocol
+> with known security risks. Restrict SMB (port 445) to trusted hosts only.
+> Integrate a network monitoring tool such as Suricata to detect port scans.
 
 ---
 
