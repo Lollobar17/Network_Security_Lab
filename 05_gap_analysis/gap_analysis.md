@@ -16,6 +16,11 @@ against the expected behavior, and gaps were identified and categorized.
 The findings in this document will serve as the improvement roadmap for
 the HomeLab SIEM project.
 
+> [!IMPORTANT]
+> All gaps identified in this document are based on real test results
+> from controlled attack simulations. The improvement roadmap at the
+> end of this document maps each gap to a concrete remediation action.
+
 ---
 
 ## Gap Summary
@@ -39,6 +44,11 @@ the HomeLab SIEM project.
 **Scenario:** 01 — Network Scanning
 **Severity:** High
 **MITRE Expected:** T1046 — Network Service Discovery
+
+> [!CAUTION]
+> This is the most critical gap — network scanning is the first phase
+> of virtually every attack. Without detection at this stage, all
+> subsequent attack phases will also go undetected until much later.
 
 **Description:**
 The SIEM did not detect the Nmap port scan executed against the host.
@@ -65,11 +75,14 @@ defined time window.
 **MITRE Detected:** T1078 — Valid Accounts
 **MITRE Expected:** T1110 — Brute Force
 
+> [!IMPORTANT]
+> While the SIEM detected the attack, incorrect MITRE classification
+> affects threat intelligence quality and incident response prioritization.
+> T1110 and T1078 require different response procedures.
+
 **Description:**
 The SIEM correctly detected repeated SSH login attempts but classified
-them under T1078 (Valid Accounts) instead of T1110 (Brute Force). While
-T1078 is not incorrect, T1110 is the more accurate classification for
-automated password guessing attacks.
+them under T1078 (Valid Accounts) instead of T1110 (Brute Force).
 
 **Root Cause:**
 The AUTH-002 rule triggers on any root login attempt regardless of
@@ -88,14 +101,18 @@ as T1110 Brute Force with CRITICAL severity instead of HIGH.
 **Scenario:** 02 — SSH Brute Force
 **Severity:** High
 
+> [!CAUTION]
+> Missing source IP in alerts is a critical gap for incident response.
+> Without the attacker IP, blocking the threat at the firewall level
+> is not possible from the alert data alone.
+
 **Description:**
 The /api/alerts endpoint does not include the source IP address of the
 attacker. The IP is available in /api/stats but not consolidated in the
 alert data, requiring analysts to cross-reference multiple endpoints.
 
 **Root Cause:**
-The alert schema does not include a source_ip field. The rule engine
-generates alerts without extracting and storing the originating IP.
+The alert schema does not include a source_ip field.
 
 **Recommendation:**
 Update the alert schema to include source_ip as a mandatory field.
@@ -110,14 +127,17 @@ and attach it to the generated alert.
 **Severity:** High
 **MITRE Expected:** T1110 — Brute Force
 
+> [!CAUTION]
+> Hydra generated 3509 attempts in 3 minutes with no CRITICAL alert.
+> In a real environment this attack rate would compromise accounts
+> within minutes if weak passwords are in use.
+
 **Description:**
 The SIEM has no rule that triggers based on the volume of failed login
-attempts. Hydra generated over 3500 attempts in 3 minutes — a clear
-brute force pattern — but no dedicated high-volume alert was generated.
+attempts. Each event is evaluated independently without aggregation.
 
 **Root Cause:**
-The current ruleset lacks time-window based correlation rules. Each
-event is evaluated independently without aggregation over time.
+The current ruleset lacks time-window based correlation rules.
 
 **Recommendation:**
 Add a correlation rule: if more than 10 failed SSH login attempts occur
@@ -132,19 +152,22 @@ mapped to T1110.
 **Severity:** Medium
 **MITRE Expected:** T1190 — Exploit Public-Facing Application
 
+> [!IMPORTANT]
+> 147 malicious HTTP requests were sent with zero detection. Flask
+> generates access logs but they are not parsed by the SIEM collector —
+> adding this integration would close both G-05 and G-06 simultaneously.
+
 **Description:**
-SQLmap sent 147 HTTP requests containing malicious SQL payloads to the
-SIEM REST API. None of these requests triggered a SIEM alert. The web
-layer is completely invisible to the current detection ruleset.
+SQLmap sent 147 HTTP requests containing malicious SQL payloads.
+None triggered a SIEM alert.
 
 **Root Cause:**
-The SIEM does not monitor its own HTTP access logs. Flask generates
-access logs but these are not parsed by the collector.
+The SIEM does not monitor its own HTTP access logs.
 
 **Recommendation:**
 Add Flask access log parsing to the collector. Implement a rule that
-detects anomalous request patterns — high request volume from a single
-IP, SQL keywords in URL parameters, or repeated 400/404 responses.
+detects anomalous request patterns — high request volume, SQL keywords
+in URL parameters, or repeated 400/404 responses.
 
 ---
 
@@ -155,17 +178,15 @@ IP, SQL keywords in URL parameters, or repeated 400/404 responses.
 **MITRE Expected:** T1083 — File and Directory Discovery
 
 **Description:**
-Three path traversal variants using ../ sequences were tested against
-the SIEM web application. No alerts were generated despite the clearly
-anomalous URL patterns.
+Three path traversal variants using ../ sequences generated no alerts
+despite clearly anomalous URL patterns.
 
 **Root Cause:**
-Same as G-05 — web traffic is not monitored. Additionally, no rule
-exists for detecting directory traversal patterns in HTTP requests.
+Same as G-05 — web traffic is not monitored.
 
 **Recommendation:**
-Add a detection rule that flags HTTP requests containing ../ or URL-encoded
-equivalents. This can be implemented as part of the Flask access log
+Add a detection rule that flags HTTP requests containing ../ or
+URL-encoded equivalents. Implement as part of the Flask access log
 parsing improvement from G-05.
 
 ---
@@ -175,29 +196,32 @@ parsing improvement from G-05.
 **Scenario:** All
 **Severity:** Medium
 
+> [!IMPORTANT]
+> Zero CRITICAL alerts across 800+ events and an active brute force
+> attack suggests the severity thresholds need recalibration. CRITICAL
+> should be reserved for confirmed active threats, not just suspicious
+> activity.
+
 **Description:**
-Across all four scenarios and over 800 logged events, the SIEM generated
-zero CRITICAL severity alerts. The most severe classification used was
-HIGH for root login attempts — even during an active brute force attack
-with thousands of attempts per minute.
+Across all four scenarios the maximum alert severity was HIGH.
+No conditions for CRITICAL severity are currently defined.
 
 **Root Cause:**
-The current ruleset does not define conditions for CRITICAL severity.
-All rules are statically assigned LOW, MEDIUM or HIGH severity without
-dynamic escalation based on attack intensity.
+All rules are statically assigned severity without dynamic escalation.
 
 **Recommendation:**
-Define CRITICAL severity thresholds for high-impact scenarios:
-- Brute force exceeding 100 attempts/minute — CRITICAL
-- Successful authentication after multiple failures — CRITICAL
-- Known malicious IP detected — CRITICAL
+Define CRITICAL thresholds: brute force exceeding 100 attempts/minute,
+successful auth after multiple failures, or known malicious IP detected.
 
 ---
 
 ## SIEM Improvement Roadmap
 
-Based on the gaps identified above, the following improvements are
-planned for the HomeLab SIEM:
+> [!TIP]
+> Implement improvements in priority order — items 1-3 can be completed
+> with minimal effort and will immediately improve alert quality.
+> Item 6 requires the most architectural work but closes the most
+> critical detection gap.
 
 | Priority | Improvement | Gap | Effort |
 |---|---|---|---|
@@ -215,4 +239,3 @@ planned for the HomeLab SIEM:
 - MITRE ATT&CK Framework: https://attack.mitre.org
 - HomeLab SIEM Repository: https://github.com/Lollobar17/homelab-siem
 - Network Security Monitoring Lab: https://github.com/Lollobar17/Network_Security_Lab
-
