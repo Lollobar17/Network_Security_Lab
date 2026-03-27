@@ -16,13 +16,11 @@ penetration testing tools. The assessment was designed to validate the
 detection capabilities of a custom-built SIEM system and identify gaps
 in its current rule engine.
 
-Four attack scenarios were executed across two weeks, covering network
-reconnaissance, authentication attacks, web application testing and
-file system enumeration. The SIEM demonstrated partial detection
-capability — correctly identifying authentication-based threats while
-showing significant gaps in network-level and web-layer visibility.
-
-**Overall Assessment: Partial Detection — Improvement Required**
+> [!IMPORTANT]
+> Overall Assessment: Partial Detection — Improvement Required.
+> Detection rate across all four scenarios: 25% (1/4).
+> The SIEM correctly identifies authentication-based threats but has
+> no visibility into network-level or web-layer attack activity.
 
 | Scenario | Tool | SIEM Detection | Verdict |
 |---|---|---|---|
@@ -62,10 +60,10 @@ The Nmap scan successfully identified 4 open ports on the target:
 | 445/tcp | SMB | High |
 | 2968/tcp | Unknown | Low |
 
-Port 445 (SMB) represents the highest risk — historically associated
-with critical vulnerabilities including EternalBlue and WannaCry.
-The SIEM generated no alerts, confirming a complete blind spot for
-perimeter-level reconnaissance activity.
+> [!CAUTION]
+> Port 445 (SMB) is exposed with no detection capability. This is the
+> highest risk finding of this scenario — SMB has been the vector for
+> some of the most destructive attacks in recent history.
 
 ---
 
@@ -75,11 +73,8 @@ perimeter-level reconnaissance activity.
 **MITRE:** T1110 — Brute Force
 **Result:** SIEM partially detected — 3 HIGH alerts generated
 
-Hydra executed 3,509 login attempts at ~1,230 tries/minute against
-the SSH service. The SIEM correctly detected root login attempts and
-generated HIGH severity alerts via rule AUTH-002.
-
-**SIEM Response:**
+Hydra executed 3,509 login attempts at ~1,230 tries/minute.
+The SIEM generated HIGH severity alerts via rule AUTH-002.
 
 | Alert | Rule | Severity | MITRE |
 |---|---|---|---|
@@ -87,8 +82,10 @@ generated HIGH severity alerts via rule AUTH-002.
 | Root Login Attempt | AUTH-002 | HIGH | T1078 |
 | Root Login Attempt | AUTH-002 | HIGH | T1078 |
 
-Two gaps were identified: MITRE misclassification (T1078 vs T1110)
-and missing source IP in alert data.
+> [!IMPORTANT]
+> This is the only scenario where the SIEM generated alerts.
+> Detection was partial — MITRE was misclassified and source IP
+> was missing from alert data.
 
 ---
 
@@ -96,15 +93,14 @@ and missing source IP in alert data.
 
 **Tool:** SQLmap 1.9.11
 **MITRE:** T1190 — Exploit Public-Facing Application
-**Result:** No vulnerabilities found — SIEM did not detect testing activity
+**Result:** No vulnerabilities found — SIEM did not detect testing
 
-Three API endpoints were tested with 147 total HTTP requests.
-All endpoints correctly rejected SQL injection payloads, returning
-404 or 400 responses. The SIEM generated no alerts — the web layer
-is not monitored by the current ruleset.
+147 HTTP requests with malicious SQL payloads — zero alerts generated.
 
-**Positive finding:** The SIEM application itself is not vulnerable
-to SQL injection, demonstrating secure coding practices.
+> [!TIP]
+> Positive finding: the SIEM application itself is not vulnerable to
+> SQL injection. Flask + SQLite with parameterized queries provides
+> effective protection at the application layer.
 
 ---
 
@@ -112,11 +108,14 @@ to SQL injection, demonstrating secure coding practices.
 
 **Tool:** Manual testing with curl
 **MITRE:** T1083 — File and Directory Discovery
-**Result:** No vulnerabilities found — SIEM did not detect testing activity
+**Result:** No vulnerabilities found — SIEM did not detect testing
 
-Three path traversal variants were tested — basic, static path and
-URL-encoded. All returned 404 Not Found, confirming Flask's built-in
-routing prevents directory escape by design.
+Three path traversal variants — all returned 404 Not Found.
+
+> [!TIP]
+> Positive finding: Flask's built-in routing prevents path traversal
+> by design. No explicit input validation was needed to block these
+> attacks — the framework architecture provides inherent protection.
 
 ---
 
@@ -135,38 +134,41 @@ routing prevents directory escape by design.
 
 ## Key Findings
 
-### Finding 01 — No Network Layer Visibility
-The SIEM has no ability to detect inbound network scanning or
-reconnaissance activity. This represents a critical gap for
-early-stage attack detection.
+> [!CAUTION]
+> Finding 01 — No Network Layer Visibility
+> The SIEM cannot detect inbound network scanning or reconnaissance.
+> This is a critical gap — port scanning precedes virtually every attack.
 
-### Finding 02 — Partial Authentication Monitoring
-SSH brute force was detected but misclassified. The SIEM correctly
-identifies individual suspicious login attempts but lacks correlation
-rules to detect high-volume automated attacks as a distinct threat.
+> [!CAUTION]
+> Finding 02 — Partial Authentication Monitoring
+> SSH brute force was detected but misclassified. No correlation rules
+> exist for high-volume automated attacks.
 
-### Finding 03 — Web Layer Blind Spot
-Neither SQL injection attempts nor path traversal attacks triggered
-any SIEM alerts. The web application layer is completely unmonitored.
+> [!CAUTION]
+> Finding 03 — Web Layer Blind Spot
+> Neither SQL injection nor path traversal generated any alerts.
+> 147 malicious requests passed completely undetected.
 
-### Finding 04 — Incomplete Alert Data
-Alerts do not include source IP addresses, significantly reducing
-their value for incident response and forensic investigation.
+> [!CAUTION]
+> Finding 04 — Incomplete Alert Data
+> Source IP is absent from alerts, significantly reducing incident
+> response capability.
 
-### Finding 05 — No CRITICAL Severity Threshold
-Despite an active brute force attack with thousands of attempts,
-the maximum alert severity generated was HIGH. No conditions for
-CRITICAL severity are currently defined.
+> [!CAUTION]
+> Finding 05 — No CRITICAL Severity Threshold
+> Zero CRITICAL alerts despite an active brute force attack with
+> thousands of attempts per minute.
 
 ---
 
 ## Positive Findings
 
-- The SIEM application correctly resists SQL injection attacks
-- Flask routing prevents path traversal by design
-- AUTH-002 rule correctly identifies root login attempts
-- MITRE ATT&CK mapping is partially implemented
-- Dashboard provides clear visual representation of alerts
+> [!TIP]
+> The SIEM application correctly resists SQL injection attacks.
+> Flask routing prevents path traversal by design.
+> AUTH-002 rule correctly identifies root login attempts.
+> MITRE ATT&CK mapping is partially implemented.
+> Dashboard provides clear visual representation of alerts.
 
 ---
 
@@ -185,21 +187,15 @@ CRITICAL severity are currently defined.
 
 ## Conclusion
 
-This assessment demonstrates a functional but incomplete security
-monitoring capability. The HomeLab SIEM successfully detects
-authentication-based threats but lacks visibility into network-level
-and web-layer attack activity.
-
-The identified gaps provide a clear and actionable improvement roadmap.
-Implementing the recommendations — particularly network-level monitoring
-and brute force correlation rules — would significantly increase the
-detection coverage from 25% to an estimated 75%+ across the tested
-attack scenarios.
-
-This project demonstrates practical application of penetration testing
-methodology, SIEM architecture analysis, and security gap identification
-in a controlled environment — skills directly applicable to enterprise
-system integration and security operations roles.
+> [!IMPORTANT]
+> This assessment demonstrates a functional but incomplete security
+> monitoring capability. Implementing the recommendations would increase
+> detection coverage from 25% to an estimated 75%+ across the tested
+> attack scenarios.
+> This project demonstrates practical application of penetration testing
+> methodology, SIEM architecture analysis, and security gap identification
+> in a controlled environment — skills directly applicable to enterprise
+> system integration and security operations roles.
 
 ---
 
@@ -210,4 +206,3 @@ system integration and security operations roles.
 - Network Security Monitoring Lab: https://github.com/Lollobar17/Network_Security_Lab
 - PTES Standard: http://www.pentest-standard.org
 - OWASP Testing Guide: https://owasp.org/www-project-web-security-testing-guide
-
