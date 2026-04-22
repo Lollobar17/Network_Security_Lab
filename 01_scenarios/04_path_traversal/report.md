@@ -5,7 +5,7 @@
 **Environment:** Controlled Lab — SIEM Flask Application
 **Tool:** curl (manual testing)
 **MITRE Technique:** T1083 — File and Directory Discovery
-**Status:** Completed
+**Status:** Completed — Post-Remediation Verified
 
 ---
 
@@ -22,7 +22,7 @@ URL-encoded variants.
 
 | Field | Value |
 |---|---|
-| **IP Address** | 192.168.0.45 |
+| **IP Address** | 10.0.2.2 (VirtualBox NAT gateway) |
 | **Application** | HomeLab SIEM — Flask |
 | **Port** | 5000 |
 | **Target File** | /etc/passwd (Linux system file) |
@@ -36,15 +36,15 @@ the Kali Linux terminal.
 
 ### 1. Basic Path Traversal
 
-curl http://192.168.0.45:5000/../../../etc/passwd
+curl http://10.0.2.2:5000/static/../../../etc/passwd
 
 ### 2. Static Path Traversal
 
-curl http://192.168.0.45:5000/static/../../../etc/passwd
+curl http://10.0.2.2:5000/static/../../../etc/passwd
 
 ### 3. URL-Encoded Path Traversal
 
-curl http://192.168.0.45:5000/static/..%2F..%2F..%2Fetc%2Fpasswd
+curl http://10.0.2.2:5000/static/..%2F..%2F..%2Fetc%2Fpasswd
 
 > [!TIP]
 > Always test URL-encoded variants — many applications sanitize literal
@@ -56,43 +56,57 @@ curl http://192.168.0.45:5000/static/..%2F..%2F..%2Fetc%2Fpasswd
 
 ## Findings
 
-### Test Results Summary
+### Initial Test Results (v1.0.0)
 
-| Test | Technique | HTTP Response | Vulnerable | Result |
+| Test | Technique | HTTP Response | Vulnerable | SIEM Alert |
 |---|---|---|---|---|
-| 01 | Basic traversal | 404 Not Found | No | Not vulnerable |
-| 02 | Static path traversal | 404 Not Found | No | Not vulnerable |
-| 03 | URL-encoded traversal | 404 Not Found | No | Not vulnerable |
+| 01 | Basic traversal | 404 Not Found | No | Not detected |
+| 02 | Static path traversal | 404 Not Found | No | Not detected |
+| 03 | URL-encoded traversal | 404 Not Found | No | Not detected |
 
-### Security Observations
+### Post-Remediation Test Results (v1.2.0)
+
+| Test | Technique | HTTP Response | Vulnerable | SIEM Alert |
+|---|---|---|---|---|
+| 01 | Basic traversal | 404 Not Found | No | WEB-001 detected |
 
 > [!IMPORTANT]
-> All three path traversal variants were blocked by Flask's built-in
-> routing mechanism. Routes are explicitly defined and the framework
-> does not serve arbitrary filesystem paths — this is protection by
-> design, not by explicit input validation.
+> Flask correctly blocks path traversal — 404 returned for all variants.
+> Post-remediation: WEB-001 now detects the ../ pattern in the request
+> path and generates a MEDIUM alert with source IP.
+
+### Security Observations
 
 | Finding | Severity | Notes |
 |---|---|---|
 | No path traversal vulnerability detected | Positive | All variants correctly rejected |
 | Flask default routing prevents directory escape | Positive | Framework-level protection working |
-| URL encoding bypass ineffective | Positive | Server correctly decodes and rejects encoded payloads |
+| WEB-001 alert generated | Positive | Detection confirmed post-remediation |
 
 ---
 
 ## SIEM Detection Analysis
 
+### Initial Assessment (v1.0.0)
+
 | Check | Result | Notes |
 |---|---|---|
 | Traversal attempts logged | Not detected | Web layer not monitored |
 | Anomalous URL patterns detected | Not detected | ../ sequences generated no alert |
-| Source IP flagged | Not detected | No web traffic monitoring capability |
+| Source IP flagged | Not detected | No web traffic monitoring |
 
-> [!CAUTION]
-> Three path traversal attempts with clearly anomalous URL patterns
-> generated zero SIEM alerts. The ../ sequences in HTTP requests are
-> a well-known attack indicator that should be flagged immediately.
-> This gap is shared with Scenario 03 — web traffic is not monitored.
+### Post-Remediation (v1.2.0)
+
+| Check | Result | Notes |
+|---|---|---|
+| Traversal alert triggered | Detected | WEB-001 — MEDIUM severity |
+| MITRE T1083 mapped | Detected | Correctly classified |
+| Source IP logged | Detected | source_ip present in alert |
+
+> [!TIP]
+> Post-remediation fix: Flask access log parsing added to collector.py
+> enables WEB-001 to detect ../ patterns in HTTP request paths.
+> ANSI escape code stripping ensures reliable log parsing.
 
 ---
 
@@ -100,27 +114,26 @@ curl http://192.168.0.45:5000/static/..%2F..%2F..%2Fetc%2Fpasswd
 
 | File | Description |
 |---|---|
-| `path_traversal_tests.png` | All three curl tests — basic, static and URL-encoded variants |
+| `path_traversal_tests.png` | Initial test — all three curl variants, no alerts |
+| `web001_alert_api.png` | Post-remediation — WEB-001 alert in SIEM dashboard |
 
 ---
 
 ## Conclusions
 
-All three path traversal variants were successfully blocked by the Flask
-application. The server returned 404 Not Found for every attempt,
-demonstrating that the application correctly prevents directory
-traversal attacks.
+All three path traversal variants were successfully blocked by Flask.
+The server returned 404 Not Found for every attempt, confirming that
+the application is not vulnerable to directory traversal attacks.
 
-Flask's built-in routing mechanism provides effective protection against
-path traversal by design — routes are explicitly defined and the
-framework does not serve arbitrary filesystem paths.
+Post-remediation, the addition of Flask access log parsing enabled
+WEB-001 to detect the ../ traversal pattern and generate a MEDIUM
+severity alert with correct MITRE T1083 classification.
 
 > [!TIP]
-> Key remediation recommendations:
-> Add Flask access log parsing to detect ../ patterns in HTTP requests.
-> Implement a WAF rule to flag and block path traversal attempts.
-> Add explicit input validation for any endpoints that accept file paths
-> as parameters to complement Flask's built-in protection.
+> Key takeaways:
+> Flask routing prevents path traversal by design.
+> WEB-001 now detects traversal attempts in real time.
+> Source IP is correctly logged in all web alerts.
 
 ---
 
