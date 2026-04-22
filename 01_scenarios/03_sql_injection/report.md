@@ -132,7 +132,8 @@ sqlmap -u "http://10.0.2.2:5000/vulnerable?q=1" --batch --level=3 --risk=2
 | `05_sqlmap_api_ingest.png` | Initial test — /api/ingest, no alerts |
 | `06_sqlmap_api_ingest.png` | Initial test — /api/ingest part 2 |
 | `07_sqlmap_injection_confirmed.png` | Post-remediation — SQLmap confirming injection |
-| `08_web003_alert_api.png` | Post-remediation — WEB-003 alerts in SIEM dashboard |
+| `08_sqlmap_injection_confirmed.png` | Post-remediation — SQLmap confirming injection part 2 |
+| `09_web003_alert_api.png` | Post-remediation — WEB-003 alerts in SIEM dashboard |
 
 ---
 
