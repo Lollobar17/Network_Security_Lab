@@ -5,7 +5,7 @@
 **Environment:** Controlled Lab — SIEM Flask Application
 **Tool:** SQLmap 1.9.11
 **MITRE Technique:** T1190 — Exploit Public-Facing Application
-**Status:** Completed
+**Status:** Completed — Post-Remediation Verified
 
 ---
 
@@ -21,10 +21,10 @@ and whether the SIEM itself logs suspicious request patterns.
 
 | Field | Value |
 |---|---|
-| **IP Address** | 192.168.0.45 |
+| **IP Address** | 10.0.2.2 (VirtualBox NAT gateway) |
 | **Application** | HomeLab SIEM — Flask + SQLite |
 | **Port** | 5000 |
-| **Endpoints Tested** | /api/events, /api/alerts, /api/ingest |
+| **Endpoints Tested** | /api/events, /api/alerts, /api/ingest, /vulnerable |
 
 ---
 
@@ -45,6 +45,10 @@ sqlmap -u http://192.168.0.45:5000/api/alerts --batch
 
 sqlmap -u http://192.168.0.45:5000/api/ingest --data="source=test&message=test" --batch
 
+### 4. Post-Remediation Test — /vulnerable endpoint
+
+sqlmap -u "http://10.0.2.2:5000/vulnerable?q=1" --batch --level=3 --risk=2
+
 > [!TIP]
 > Always test POST endpoints separately with --data flag — GET endpoints
 > often return 404 for missing parameters while POST endpoints reveal
@@ -55,7 +59,7 @@ sqlmap -u http://192.168.0.45:5000/api/ingest --data="source=test&message=test" 
 
 ## Findings
 
-### Test Results Summary
+### Initial Test Results (v1.0.0)
 
 | Endpoint | Method | HTTP Response | SQLi Vulnerable | Result |
 |---|---|---|---|---|
@@ -63,35 +67,57 @@ sqlmap -u http://192.168.0.45:5000/api/ingest --data="source=test&message=test" 
 | /api/alerts | GET | 404 Not Found | No | Not vulnerable |
 | /api/ingest | POST | 400 Bad Request | No | Not vulnerable |
 
+### Post-Remediation Test Results (v1.2.0)
+
+| Endpoint | Method | Injection Type | Result |
+|---|---|---|---|
+| /vulnerable?q=1 | GET | Boolean-based blind | Vulnerable |
+| /vulnerable?q=1 | GET | Time-based blind | Vulnerable |
+| /vulnerable?q=1 | GET | UNION query | Vulnerable |
+
+> [!CAUTION]
+> SQLmap confirmed SQL injection vulnerabilities on the /vulnerable
+> endpoint with 54 HTTP requests. Back-end DBMS: SQLite.
+> This endpoint is intentionally vulnerable for testing purposes only.
+
 ### Security Observations
 
 > [!IMPORTANT]
-> The /api/ingest endpoint returns 400 Bad Request on malformed input —
-> confirming that input validation is active. This is a positive security
-> finding. However, the SIEM generated no alerts for 147 anomalous HTTP
-> requests, indicating a complete web layer blind spot.
+> All production endpoints correctly reject SQL injection payloads.
+> The /vulnerable endpoint is intentionally vulnerable for testing.
+> Post-remediation: WEB-003 now detects SQL injection patterns in
+> web traffic via Flask access log parsing.
 
 | Finding | Severity | Notes |
 |---|---|---|
-| No SQL injection vulnerability detected | Positive | All endpoints correctly reject malicious payloads |
-| /api/ingest returns 400 on malformed requests | Positive | Input validation is working as expected |
-| /api/events and /api/alerts return 404 | Neutral | Endpoints may require authentication or specific parameters |
+| No SQLi on production endpoints | Positive | Input validation working |
+| /api/ingest returns 400 on malformed input | Positive | Validation confirmed |
+| WEB-003 alert generated | Positive | Detection confirmed post-remediation |
 
 ---
 
 ## SIEM Detection Analysis
 
+### Initial Assessment (v1.0.0)
+
 | Check | Result | Notes |
 |---|---|---|
 | SQLmap requests logged | Not detected | Web layer not monitored |
-| High request volume detected | Not detected | 147 requests in seconds generated no alert |
-| Source IP flagged | Not detected | No web traffic monitoring capability |
+| High request volume detected | Not detected | 147 requests generated no alert |
+| Source IP flagged | Not detected | No web traffic monitoring |
 
-> [!CAUTION]
-> SQLmap sent 147 HTTP requests with malicious SQL payloads and zero
-> alerts were generated. The SIEM has no visibility into its own web
-> traffic — Flask access logs are not parsed by the collector.
-> This is a significant gap for web application security monitoring.
+### Post-Remediation (v1.2.0)
+
+| Check | Result | Notes |
+|---|---|---|
+| SQL injection alert triggered | Detected | WEB-003 — HIGH severity |
+| MITRE T1190 mapped | Detected | Correctly classified |
+| Source IP logged | Detected | source_ip present in alert |
+
+> [!TIP]
+> Post-remediation fix: Flask access log parsing added to collector.py
+> and ANSI escape code stripping added to _process_raw_line().
+> WEB-003 now correctly detects SQL injection patterns in web traffic.
 
 ---
 
@@ -99,31 +125,28 @@ sqlmap -u http://192.168.0.45:5000/api/ingest --data="source=test&message=test" 
 
 | File | Description |
 |---|---|
-| `01_sqlmap_api_events.png` | SQLmap output — /api/events test part 1 |
-| `02_sqlmap_api_events.png` | SQLmap output — /api/events test part 2 |
-| `03_sqlmap_api_alerts.png` | SQLmap output — /api/alerts test part 1 |
-| `04_sqlmap_api_alerts.png` | SQLmap output — /api/alerts test part 2 |
-| `05_sqlmap_api_ingest.png` | SQLmap output — /api/ingest test part 1 |
-| `06_sqlmap_api_ingest.png` | SQLmap output — /api/ingest test part 2 |
+| `01_sqlmap_api_events.png` | Initial test — /api/events, no alerts |
+| `02_sqlmap_api_events.png` | Initial test — /api/events part 2 |
+| `03_sqlmap_api_alerts.png` | Initial test — /api/alerts, no alerts |
+| `04_sqlmap_api_alerts.png` | Initial test — /api/alerts part 2 |
+| `05_sqlmap_api_ingest.png` | Initial test — /api/ingest, no alerts |
+| `06_sqlmap_api_ingest.png` | Initial test — /api/ingest part 2 |
+| `07_sqlmap_injection_confirmed.png` | Post-remediation — SQLmap confirming injection |
+| `08_web003_alert_api.png` | Post-remediation — WEB-003 alerts in SIEM dashboard |
 
 ---
 
 ## Conclusions
 
-All three tested endpoints of the SIEM REST API showed no SQL injection
-vulnerabilities. This is a positive security finding — the Flask application
-correctly handles and rejects malicious input across all tested surfaces.
-
-The 400 Bad Request response on /api/ingest confirms that input validation
-is functioning correctly, rejecting malformed POST data before it reaches
-the database layer.
+Production endpoints are protected against SQL injection. Post-remediation,
+Flask access log parsing enables WEB-003 to detect attack patterns in
+real time with correct MITRE T1190 classification and source IP.
 
 > [!TIP]
-> Key remediation recommendations:
-> Add Flask access log parsing to the SIEM collector to gain web layer
-> visibility. Implement rate limiting on API endpoints to flag high-volume
-> requests from single sources. Consider adding authentication to REST API
-> endpoints to reduce the attack surface.
+> Key takeaways:
+> Production endpoints are protected against SQL injection.
+> Web layer monitoring is now active via Flask access log parsing.
+> WEB-003 detects SQL injection patterns with source IP logging.
 
 ---
 
