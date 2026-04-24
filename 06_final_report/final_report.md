@@ -20,7 +20,7 @@ in its current rule engine.
 > [!IMPORTANT]
 > Initial Assessment (v1.0.0): 25% detection rate — 1/4 scenarios detected.
 > Post-Remediation (v1.2.0): 75% detection rate — 3/4 scenarios detected.
-> Remaining open gap: G-01 — Network layer visibility (planned v1.3.0).
+> Remaining open gap: G-01 — Network layer visibility (planned v1.4.0).
 
 | Scenario | Tool | Initial Detection | Post-Remediation | Verdict |
 |---|---|---|---|---|
