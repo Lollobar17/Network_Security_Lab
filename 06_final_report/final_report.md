@@ -61,7 +61,7 @@ in its current rule engine.
 
 > [!CAUTION]
 > Port 445 (SMB) is exposed with no detection capability. This remains
-> the most critical open finding — planned for v1.3.0 with Suricata/Zeek
+> the most critical open finding — planned for v1.4.0 with Suricata/Zeek
 > network monitoring integration.
 
 ---
@@ -156,7 +156,7 @@ prevents directory traversal by design.
 
 | Gap | Description | Resolution | Version |
 |---|---|---|---|
-| G-01 | No network scanning detection | Pending — Suricata/Zeek | v1.3.0 |
+| G-01 | No network scanning detection | Pending — Suricata/Zeek | v1.4.0 |
 | G-02 | MITRE misclassification | AUTH-002 T1078 → T1110 | v1.1.0 |
 | G-03 | Source IP absent from alerts | source_ip added to schema | v1.2.0 |
 | G-04 | No brute force volume detection | AUTH-005 CRITICAL added | v1.2.0 |
@@ -170,7 +170,7 @@ prevents directory traversal by design.
 
 > [!CAUTION]
 > Finding 01 — No Network Layer Visibility (G-01 — Open)
-> The SIEM cannot detect inbound network scanning. Planned for v1.3.0
+> The SIEM cannot detect inbound network scanning. Planned for v1.4.0
 > with Suricata/Zeek integration.
 
 > [!TIP]
@@ -211,7 +211,7 @@ prevents directory traversal by design.
 
 | Priority | Recommendation | Gap | Status |
 |---|---|---|---|
-| Critical | Network monitoring layer — Suricata/Zeek | G-01 | Open — v1.3.0 |
+| Critical | Network monitoring layer — Suricata/Zeek | G-01 | Open — v1.4.0 |
 | Complete | source_ip in alert schema | G-03 | Resolved v1.2.0 |
 | Complete | T1110 brute force correlation rule | G-04 | Resolved v1.2.0 |
 | Complete | MITRE classification fix AUTH-002 | G-02 | Resolved v1.1.0 |
@@ -228,7 +228,7 @@ prevents directory traversal by design.
 > verification and professional documentation.
 > Detection coverage improved from 25% to 75% through iterative
 > remediation. The only remaining gap (G-01) requires architectural
-> work planned for v1.3.0.
+> work planned for v1.4.0.
 > This project demonstrates practical application of penetration testing
 > methodology, SIEM architecture analysis, iterative improvement and
 > professional documentation — skills directly applicable to enterprise
