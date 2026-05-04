@@ -1,6 +1,6 @@
 # Network Security Monitoring Lab
 
-![Status](https://img.shields.io/badge/Status-Active-brightgreen)
+![Status](https://img.shields.io/badge/Status-Completed-brightgreen)
 ![Type](https://img.shields.io/badge/Type-System%20Integration-blue)
 ![Environment](https://img.shields.io/badge/Environment-Controlled%20Lab-lightgrey)
 ![SIEM](https://img.shields.io/badge/SIEM-Custom%20Python-red)
@@ -43,7 +43,9 @@ Each scenario is designed to answer a specific question:
 > [!IMPORTANT]
 > This project bridges offensive simulation and defensive monitoring —
 > every attack scenario is paired with a SIEM detection analysis and
-> a concrete improvement recommendation.
+> a concrete improvement recommendation. All 7 detection gaps identified
+> during the initial assessment have been resolved across SIEM v1.1.0
+> through v1.5.0, achieving 100% detection coverage.
 
 This approach reflects real-world security operations in enterprise and
 regulated environments, where system administrators are responsible for
@@ -55,15 +57,16 @@ ensuring infrastructure resilience and compliance with security standards.
 
 | Component | Technology | Role |
 |---|---|---|
-| **Attacker Node** | Kali Linux (VirtualBox VM) | Simulates external threat actor |
+| **Attacker Node** | Kali Linux (WSL2) | Simulates external threat actor |
 | **Target Environment** | Controlled local network | Isolated test infrastructure |
 | **SIEM System** | Custom Python + Flask + SQLite | Detection, logging and alerting |
-| **Detection Rules** | MITRE ATT&CK mapped rule engine | 8 built-in detection rules |
+| **Network IDS** | Suricata — eve.json ingestion | Network-level threat detection |
+| **Detection Rules** | MITRE ATT&CK mapped rule engine | 11 built-in detection rules |
 | **Dashboard** | Live web UI — KPIs, timeline, alerts | Real-time monitoring interface |
 | **REST API** | /api/events, /api/alerts, /api/stats | Programmatic access to SIEM data |
 
 The SIEM system is documented separately in the
-[HomeLab SIEM](https://github.com/Lollobar17/homelab-siem) repository.
+[HomeLab SIEM](https://github.com/Lollobar17/Homelab_SIEM) repository.
 
 ---
 
@@ -86,15 +89,15 @@ Each scenario follows a structured **test-detect-improve** cycle:
 
 ## Test Scenarios
 
-| # | Scenario | Tool | MITRE Technique | Objective | Status |
-|---|---|---|---|---|---|
-| 01 | Network Scanning | Nmap | T1046 — Network Service Discovery | Validate perimeter visibility | Completed |
-| 02 | SSH Brute Force | Hydra | T1110 — Brute Force | Test authentication monitoring | Completed |
-| 03 | SQL Injection | SQLmap | T1190 — Exploit Public-Facing App | Validate web layer detection | Completed |
-| 04 | Path Traversal | Manual | T1083 — File and Directory Discovery | Test file access alerting | Completed |
+| # | Scenario | Tool | MITRE Technique | Objective | Status | Detection |
+|---|---|---|---|---|---|---|
+| 01 | Network Scanning | Nmap | T1046 — Network Service Discovery | Validate perimeter visibility | Completed | Detected via Suricata |
+| 02 | SSH Brute Force | Hydra | T1110 — Brute Force | Test authentication monitoring | Completed | Detected — CRITICAL |
+| 03 | SQL Injection | SQLmap | T1190 — Exploit Public-Facing App | Validate web layer detection | Completed | Detected — HIGH |
+| 04 | Path Traversal | Manual | T1083 — File and Directory Discovery | Test file access alerting | Completed | Detected — MEDIUM |
 
 Each scenario includes:
-- Full execution documentation
+- Full execution documentation with initial and post-remediation results
 - SIEM alert evidence (screenshots and log extracts)
 - Gap analysis and improvement recommendations
 
@@ -116,14 +119,20 @@ Brute force SSH with wordlist: `hydra -l username -P /usr/share/wordlists/rockyo
 
 Reduce parallel tasks: `hydra -l username -P wordlist.txt -t 4 ssh://192.168.56.1`
 
-### Audit Logic — XML Structure
+### SQL Injection — SQLmap
 
-Detection rule format: `<detection_rule><name>Port Scan</name><threshold>10 ports in 60s</threshold><action>ALERT</action></detection_rule>`
+Test vulnerable endpoint: `sqlmap -u "http://10.0.2.2:5000/vulnerable?q=1" --batch --level=3 --risk=2`
+
+### Path Traversal — curl
+
+Basic traversal: `curl http://10.0.2.2:5000/static/../../../etc/passwd`
+
+URL-encoded traversal: `curl http://10.0.2.2:5000/static/..%2F..%2F..%2Fetc%2Fpasswd`
 
 > [!TIP]
-> All commands above were executed from Kali Linux in a VirtualBox
-> isolated environment. Never run these tools against systems you
-> do not own or have explicit authorization to test.
+> All commands above were executed from Kali Linux in a WSL2 controlled
+> environment. Never run these tools against systems you do not own or
+> have explicit authorization to test.
 
 ---
 
@@ -136,11 +145,13 @@ The integration validates:
 - **Log completeness** — are all relevant events captured and stored?
 - **Response time** — how quickly does the alert appear on the dashboard?
 - **MITRE mapping** — is the technique correctly classified?
+- **GeoIP enrichment** — is the source IP correctly geolocated?
 
 > [!IMPORTANT]
-> The SIEM detected 1 out of 4 scenarios (25% detection rate).
-> Full gap analysis and improvement roadmap are documented in
-> 05_gap_analysis/gap_analysis.md
+> Final Detection Rate: 100% — 4/4 scenarios fully detected.
+> Initial detection rate was 25% (v1.0.0). All 7 gaps resolved across
+> v1.1.0 through v1.5.0. Full gap analysis and improvement roadmap
+> documented in 05_gap_analysis/gap_analysis.md
 
 ---
 
@@ -151,25 +162,25 @@ The integration validates:
 | **Nmap** | Network discovery and port scanning |
 | **Hydra** | Brute force against network services |
 | **SQLmap** | SQL injection detection and testing |
-| **Kali Linux** | Security-focused Linux distribution |
-| **Wireshark** | Network traffic analysis |
+| **Kali Linux** | Security-focused Linux distribution (WSL2) |
+| **Suricata** | Network intrusion detection system |
 
 ---
 
 ## Key Findings
 
 > [!IMPORTANT]
-> Detection Rate: 25% — 1/4 scenarios detected (partial).
-> The SIEM correctly identifies authentication-based threats but has
-> no visibility into network-level or web-layer attack activity.
+> Final Detection Rate: 100% — all 4 scenarios fully detected.
+> The SIEM correctly identifies authentication, web-layer and network-level
+> threats with CRITICAL/HIGH/MEDIUM severity and GeoIP enrichment.
 > Full findings are documented in 06_final_report/final_report.md
 
 ---
 
 ## Roadmap
 
-- [x] SIEM system operational with 8 detection rules
-- [x] Lab environment configured (Kali Linux + VirtualBox)
+- [x] SIEM system operational with 11 detection rules
+- [x] Lab environment configured (Kali Linux + WSL2)
 - [x] Scenario 01 — Network Scanning
 - [x] Scenario 02 — SSH Brute Force
 - [x] Scenario 03 — SQL Injection
@@ -196,10 +207,3 @@ The integration validates:
 
 This project is licensed under the MIT License.
 See the [LICENSE](LICENSE) file for details.
-
-
-
-
-
-
-
