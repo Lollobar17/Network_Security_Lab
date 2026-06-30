@@ -19,6 +19,7 @@
 - [Lab Architecture](#lab-architecture)
 - [Methodology](#methodology)
 - [Test Scenarios](#test-scenarios)
+- [Detection Content](#detection-content)
 - [Quick Reference](#quick-reference)
 - [SIEM Integration](#siem-integration)
 - [Tools Reference](#tools-reference)
@@ -100,6 +101,26 @@ Each scenario includes:
 - Full execution documentation with initial and post-remediation results
 - SIEM alert evidence (screenshots and log extracts)
 - Gap analysis and improvement recommendations
+
+---
+
+## Detection Content
+
+Independent from the custom SIEM rule engine, this repository also
+includes Sigma-standard detection content for current adversary
+techniques, validated with `pySigma` and tested against the public
+Mordor (OTRF/Security-Datasets) dataset.
+
+| Category | Rules | MITRE Coverage |
+|---|---|---|
+| LOLBins | 2 | T1059.001, T1140, T1105 |
+| Ransomware Precursor | 3 | T1490, T1562.001, T1083, T1486 |
+| Supply Chain | 3 | T1195.001, T1195.002, T1041, T1059 |
+
+> [!TIP]
+> Full methodology, MITRE mapping per rule and test results are
+> documented in
+> [07_detection_content/README.md](07_detection_content/README.md).
 
 ---
 
@@ -187,6 +208,8 @@ The integration validates:
 - [x] Scenario 04 — Path Traversal
 - [x] Detection gap analysis and rule improvements
 - [x] Final security assessment report
+- [x] Sigma detection content — LOLBins, ransomware precursor, supply chain (8 rules)
+- [ ] Backend conversion (Elasticsearch/Sentinel KQL) for live index testing
 
 ---
 

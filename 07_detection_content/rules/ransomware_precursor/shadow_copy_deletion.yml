@@ -1,0 +1,29 @@
+title: Shadow Copy Deletion via vssadmin or wmic
+id: 7a8b9c0d-1e2f-4a3b-5c6d-7e8f9a0b1c2d
+status: experimental
+description: Rileva la cancellazione delle Volume Shadow Copies, tecnica usata dal ransomware per impedire il ripristino dei file prima della cifratura
+references:
+    - https://attack.mitre.org/techniques/T1490/
+author: Lorenzo
+date: 2026/06/30
+tags:
+    - attack.impact
+    - attack.t1490
+logsource:
+    category: process_creation
+    product: windows
+detection:
+    selection_img:
+        Image|endswith:
+            - '\vssadmin.exe'
+            - '\wmic.exe'
+            - '\powershell.exe'
+    selection_action:
+        CommandLine|contains:
+            - 'delete shadows'
+            - 'shadowcopy delete'
+            - 'Get-WmiObject Win32_Shadowcopy'
+    condition: selection_img and selection_action
+falsepositives:
+    - Manutenzione storage legittima da parte di amministratori (raro fuori da finestre di manutenzione pianificate)
+level: critical

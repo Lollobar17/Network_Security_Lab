@@ -1,0 +1,33 @@
+title: Certutil Abuse for Download or Decode
+id: 9c4e7f21-5a3b-4d6e-8f1a-2b3c4d5e6f7a
+status: experimental
+description: Rileva l'uso di certutil.exe per scaricare file remoti o decodificare payload Base64, tecnica LOLBin comune per evadere controlli su tool di download tradizionali
+references:
+    - https://attack.mitre.org/techniques/T1140/
+    - https://attack.mitre.org/techniques/T1105/
+author: Lorenzo
+date: 2026/06/30
+tags:
+    - attack.defense_evasion
+    - attack.command_and_control
+    - attack.t1140
+    - attack.t1105
+logsource:
+    category: process_creation
+    product: windows
+detection:
+    selection_img:
+        Image|endswith: '\certutil.exe'
+    selection_download:
+        CommandLine|contains:
+            - '-urlcache'
+            - '-verifyctl'
+            - 'urlcache'
+    selection_decode:
+        CommandLine|contains:
+            - '-decode'
+            - '-decodehex'
+    condition: selection_img and (selection_download or selection_decode)
+falsepositives:
+    - Operazioni legittime su certificati da parte di amministratori PKI
+level: high

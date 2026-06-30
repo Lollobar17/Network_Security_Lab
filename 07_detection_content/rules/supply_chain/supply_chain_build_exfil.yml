@@ -1,0 +1,38 @@
+title: Outbound Connection from Build Process to Non-Standard Host
+id: 0a1b2c3d-4e5f-6a7b-8c9d-0e1f2a3b4c5d
+status: experimental
+description: Rileva un processo di build (npm, pip, node, python) all'interno di una pipeline CI/CD che apre una connessione in uscita verso un host esterno non riconducibile ai registry ufficiali (npmjs.org, pypi.org, github.com), possibile indicatore di esfiltrazione di secrets/credenziali tramite un pacchetto compromesso durante la build
+references:
+    - https://attack.mitre.org/techniques/T1195.002/
+    - https://attack.mitre.org/techniques/T1041/
+author: Lorenzo
+date: 2026/06/30
+tags:
+    - attack.exfiltration
+    - attack.t1195.002
+    - attack.t1041
+logsource:
+    category: network_connection
+    product: linux
+detection:
+    selection_process:
+        Image|endswith:
+            - '/npm'
+            - '/npx'
+            - '/node'
+            - '/pip'
+            - '/python'
+            - '/python3'
+    filter_known_registries:
+        DestinationHostname|endswith:
+            - 'registry.npmjs.org'
+            - 'pypi.org'
+            - 'files.pythonhosted.org'
+            - 'github.com'
+            - 'githubusercontent.com'
+            - 'codeload.github.com'
+    condition: selection_process and not filter_known_registries
+falsepositives:
+    - Mirror interni o proxy aziendali per i package registry (aggiungere alla whitelist filter_known_registries)
+    - Download legittimi da CDN di terze parti durante la build
+level: high

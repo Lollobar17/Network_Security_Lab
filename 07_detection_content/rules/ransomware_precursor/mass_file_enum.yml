@@ -1,0 +1,38 @@
+title: Mass File Enumeration or Rename via Script Engine
+id: 4d5e6f7a-8b9c-0d1e-2f3a-4b5c6d7e8f9a
+status: experimental
+description: Rileva processi script (PowerShell, cmd, cscript) che eseguono enumerazione massiva di directory utente, comportamento osservabile prima della cifratura ransomware durante la fase di discovery dei file target
+references:
+    - https://attack.mitre.org/techniques/T1083/
+    - https://attack.mitre.org/techniques/T1486/
+author: Lorenzo
+date: 2026/06/30
+tags:
+    - attack.discovery
+    - attack.impact
+    - attack.t1083
+    - attack.t1486
+logsource:
+    category: process_creation
+    product: windows
+detection:
+    selection_img:
+        Image|endswith:
+            - '\powershell.exe'
+            - '\cmd.exe'
+            - '\cscript.exe'
+    selection_action:
+        CommandLine|contains:
+            - 'Get-ChildItem -Recurse'
+            - 'dir /s'
+            - 'rename'
+    selection_scope:
+        CommandLine|contains:
+            - 'C:\Users'
+            - '\\Desktop'
+            - '\\Documents'
+            - '%USERPROFILE%'
+    condition: selection_img and selection_action and selection_scope
+falsepositives:
+    - Script di backup o indicizzazione legittimi (verificare frequenza e account chiamante)
+level: medium

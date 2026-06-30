@@ -1,0 +1,30 @@
+title: Windows Defender Disabled via PowerShell or Registry
+id: 2b3c4d5e-6f7a-8b9c-0d1e-2f3a4b5c6d7e
+status: experimental
+description: Rileva il tentativo di disabilitare Windows Defender (real-time monitoring, tamper protection) tramite cmdlet PowerShell, comportamento tipico pre-deployment di ransomware o altro malware
+references:
+    - https://attack.mitre.org/techniques/T1562/001/
+author: Lorenzo
+date: 2026/06/30
+tags:
+    - attack.defense_evasion
+    - attack.t1562.001
+logsource:
+    category: process_creation
+    product: windows
+detection:
+    selection_img:
+        Image|endswith:
+            - '\powershell.exe'
+            - '\pwsh.exe'
+    selection_action:
+        CommandLine|contains:
+            - 'Set-MpPreference'
+            - 'DisableRealtimeMonitoring'
+            - 'DisableBehaviorMonitoring'
+            - 'DisableIOAVProtection'
+            - 'DisableTamperProtection'
+    condition: selection_img and selection_action
+falsepositives:
+    - Deployment software legittimo che richiede esclusioni temporanee (verificare contesto e utente)
+level: high

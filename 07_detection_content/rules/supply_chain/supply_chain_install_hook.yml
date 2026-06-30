@@ -1,0 +1,35 @@
+title: Suspicious Shell Spawned by Package Manager Install Hook
+id: 6e7f8a9b-0c1d-2e3f-4a5b-6c7d8e9f0a1b
+status: experimental
+description: Rileva un processo shell (bash/sh/cmd/powershell) spawnato direttamente da npm, npx, pip o yarn durante una install, comportamento tipico di postinstall/preinstall hook malevoli usati in attacchi supply chain (es. pacchetti compromessi su npm/PyPI)
+references:
+    - https://attack.mitre.org/techniques/T1195/001/
+    - https://attack.mitre.org/techniques/T1059/
+author: Lorenzo
+date: 2026/06/30
+tags:
+    - attack.initial_access
+    - attack.execution
+    - attack.t1195.001
+    - attack.t1059
+logsource:
+    category: process_creation
+    product: linux
+detection:
+    selection_parent:
+        ParentImage|contains:
+            - 'npm'
+            - 'npx'
+            - 'pip'
+            - 'pip3'
+            - 'yarn'
+    selection_child:
+        Image|endswith:
+            - '/bash'
+            - '/sh'
+            - '/curl'
+            - '/wget'
+    condition: selection_parent and selection_child
+falsepositives:
+    - Script di build legittimi che richiamano shell per task di compilazione (verificare se il pacchetto e l'hook sono attesi nel progetto)
+level: high
