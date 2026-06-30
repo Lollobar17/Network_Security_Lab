@@ -81,8 +81,10 @@ def write_report(doc_count: int, report_rows: list[dict]):
 
 def main():
     es = Elasticsearch(ES_URL)
-    if not es.ping():
-        raise SystemExit("Elasticsearch non raggiungibile su localhost:9200")
+    try:
+        es.cluster.health()
+    except Exception as e:
+        raise SystemExit(f"Elasticsearch non raggiungibile su {ES_URL}: {e}")
 
     if es.indices.exists(index=INDEX_NAME):
         es.indices.delete(index=INDEX_NAME)
