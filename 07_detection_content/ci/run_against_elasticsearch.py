@@ -22,6 +22,25 @@ QUERIES_FILE = REPO_ROOT / "07_detection_content" / "lucene_queries.json"
 REPORT_FILE = REPO_ROOT / "07_detection_content" / "elasticsearch_validation_report.md"
 
 
+def create_index_with_mapping(es: Elasticsearch):
+    """Crea l'indice con mapping esplicito: i campi usati nelle regole
+    devono essere 'keyword' (valore esatto), non 'text' (analizzato),
+    altrimenti i wildcard letterali generati da pySigma non trovano match
+    contro token spezzettati dall'analyzer di default."""
+    mapping = {
+        "mappings": {
+            "properties": {
+                "Image": {"type": "keyword"},
+                "CommandLine": {"type": "keyword"},
+                "ParentImage": {"type": "keyword"},
+                "TargetFilename": {"type": "keyword"},
+                "DestinationHostname": {"type": "keyword"},
+            }
+        }
+    }
+    es.indices.create(index=INDEX_NAME, body=mapping)
+
+
 def load_and_index_logs(es: Elasticsearch):
     log_files = list(DATA_DIR.glob("*.json"))
     actions = []
@@ -88,6 +107,7 @@ def main():
 
     if es.indices.exists(index=INDEX_NAME):
         es.indices.delete(index=INDEX_NAME)
+    create_index_with_mapping(es)
 
     doc_count = load_and_index_logs(es)
     print("-" * 60)
