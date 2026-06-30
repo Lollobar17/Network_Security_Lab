@@ -24,8 +24,8 @@ jobs:
         options: >-
           --health-cmd "curl -s http://localhost:9200/_cluster/health || exit 1"
           --health-interval 10s
-          --health-timeout 5s
-          --health-retries 10
+          --health-timeout 10s
+          --health-retries 30
 
     steps:
       - name: Checkout repository
@@ -38,6 +38,19 @@ jobs:
 
       - name: Install dependencies
         run: pip install -r 07_detection_content/ci/requirements.txt
+
+      - name: Wait for Elasticsearch to be ready
+        run: |
+          for i in {1..60}; do
+            if curl -s http://localhost:9200/_cluster/health > /dev/null 2>&1; then
+              echo "Elasticsearch is ready"
+              exit 0
+            fi
+            echo "Waiting for Elasticsearch... attempt $i"
+            sleep 2
+          done
+          echo "Elasticsearch failed to start"
+          exit 1
 
       - name: Validate rules and convert to Lucene queries
         run: python3 07_detection_content/ci/convert_to_lucene.py
