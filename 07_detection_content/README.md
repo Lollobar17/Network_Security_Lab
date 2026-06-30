@@ -50,6 +50,17 @@ techniques not represented in the available public dataset.
 
 ---
 
+## Datasets
+
+| Source | Technique | Format |
+|---|---|---|
+| [OTRF/Security-Datasets](https://github.com/OTRF/Security-Datasets) — Mordor, `empire_launcher_vbs` | T1059.001 (APT29 emulation) | JSON-lines (Sysmon) |
+| [splunk/attack_data](https://github.com/splunk/attack_data) — `T1490/atomic_red_team` | T1490 (Atomic Red Team) | Extracted from Sysmon XML, converted to JSON-lines |
+
+Synthetic events (Python dicts, not from a public dataset) are used
+where no suitable public dataset was found, noted explicitly in the
+test results table below.
+
 ## Methodology
 
 1. **WRITE** — Author the Sigma rule (YAML) with explicit MITRE mapping and false-positive notes.
@@ -76,9 +87,9 @@ emulation, Day 1) — 2067 log lines, 5 Sysmon Process Creation events.
 
 | Rule | Dataset Match | Synthetic Match | False Positives |
 |---|---|---|---|
-| PowerShell Encoded Command | 1/1 (true positive) | — | 0/4 other process events |
+| PowerShell Encoded Command | 1/1 (true positive, Mordor) | — | 0/4 other process events |
 | Certutil Abuse | 0 (technique not in dataset) | 1/1 | — |
-| Shadow Copy Deletion | 0 (technique not in dataset) | 1/1 | — |
+| Shadow Copy Deletion | 1/1 (true positive, splunk/attack_data T1490) | 1/1 | 0 |
 | Defender Disabled | 0 (technique not in dataset) | 1/1 | — |
 | Mass File Enumeration | 0 (technique not in dataset) | 1/1 | — |
 | Supply Chain Install Hook | n/a (no CI/CD dataset) | 1/1 | — |
@@ -86,10 +97,12 @@ emulation, Day 1) — 2067 log lines, 5 Sysmon Process Creation events.
 | Build Exfiltration | n/a | 1/1 positive, 0/1 whitelist (registry.npmjs.org) | 0 |
 
 > [!IMPORTANT]
-> The PowerShell Encoded Command rule correctly identified the single
-> real attack event out of 5 process creation events in the dataset,
-> with zero false positives on the remaining benign processes
-> (wscript, conhost).
+> Two rules are now validated against real attack telemetry instead of
+> synthetic events only: PowerShell Encoded Command (Mordor/APT29) and
+> Shadow Copy Deletion (`splunk/attack_data`, T1490, Atomic Red Team
+> simulation against `vssadmin.exe delete shadows /all /quiet`).
+> Both correctly fired on the real attack event with zero false
+> positives on adjacent benign processes in the same dataset.
 
 ---
 
