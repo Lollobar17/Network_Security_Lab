@@ -29,6 +29,7 @@ def create_index_with_mapping(es: Elasticsearch):
     contro token spezzettati dall'analyzer di default."""
     mapping = {
         "mappings": {
+            "dynamic": False,
             "properties": {
                 "Image": {"type": "keyword"},
                 "CommandLine": {"type": "keyword"},
