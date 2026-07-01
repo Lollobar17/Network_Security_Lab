@@ -5,6 +5,7 @@ on:
   push:
     paths:
       - "07_detection_content/rules/**"
+      - "07_detection_content/data/**"
       - "07_detection_content/ci/**"
       - ".github/workflows/sigma-elasticsearch-validation.yml"
 
